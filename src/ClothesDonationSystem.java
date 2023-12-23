@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.Random;
 
@@ -61,6 +62,7 @@ public class ClothesDonationSystem {
     private void loadClothesData() {
         try (BufferedReader reader = new BufferedReader(new FileReader(CLOTHES_FILE))) {
             String line;
+            clothesList.clear();
             while ((line = reader.readLine()) != null) {
                 clothesList.add(line);
             }
@@ -104,9 +106,40 @@ public class ClothesDonationSystem {
     }
 
     private void displayPreviousDonations(String username) {
-        // Implement code to access and display previous clothes donated by the user
+        try {
+            loadClothesData(); // Load data from the file
+            if (clothesList == null || clothesList.isEmpty()) {
+                throw new Exception("Clothes list is empty or null.");
+            }
+    
+            if (username == null || username.trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid username provided.");
+            }
+    
+            username = username.trim(); // Trimming the username to remove leading/trailing spaces
+    
+            System.out.println("Previous donations by " + username + ":");
+    
+            boolean found = false;
+            for (String item : clothesList) {
+                String[] itemDetails = item.split(", ");
+                for (String detail : itemDetails) {
+                    if (detail.trim().replaceAll("\\s+", "").equalsIgnoreCase(username.replaceAll("\\s+", ""))) {
+                        System.out.println(item);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+    
+            if (!found) {
+                System.out.println("No previous donations found for " + username);
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
-
+        
     private void saveUsersData() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
             for (String user : usersList) {
@@ -123,13 +156,14 @@ public class ClothesDonationSystem {
         System.out.println("1. Donate Clothes");
         System.out.println("2. View Donated Clothes");
         System.out.println("3. View Donation Organizations");
-        System.out.println("4. Exit the Application");
+        System.out.println("4. Search for items");
+        System.out.println("5. Exit the Application");
 
-        Scanner scanner = new Scanner(System.in);
+        
         int choice = 0;
 
         try {
-            System.out.print("Enter your choice (1-4): ");
+            System.out.print("Enter your choice (1-5): ");
             choice = scanner.nextInt();
 
             switch (choice) {
@@ -143,9 +177,12 @@ public class ClothesDonationSystem {
                     viewDonationOrganizations();
                     break;
                 case 4:
+                searchItems();
+                    break;
+                case 5:
                     System.out.println("Exiting the application. Goodbye!");
                     System.exit(0);
-                    break;
+
                 default:
                     System.out.println("Invalid choice. Please enter a number between 1 and 4.");
             }
@@ -157,9 +194,185 @@ public class ClothesDonationSystem {
         // Recursive call to display the main menu again
         displayMainMenu();
     }
+    // Inside the ClothesDonationSystem class
+
+     private void  searchItems() {
+    System.out.println("Search Menu:");
+    System.out.println("1. Search by Gender");
+    System.out.println("2. Search by Size");
+    System.out.println("3. Search by Quality");
+    System.out.println("4. Go back to Main Menu");
+
+    int choice = 0;
+    try {
+        System.out.print("Enter your choice (1-4): ");
+        choice = scanner.nextInt();
+
+        switch (choice) {
+            case 1:
+                searchByGender();
+                break;
+            case 2:
+                searchBySize();
+                break;
+            case 3:
+                searchByQuality();
+                break;
+            case 4:
+                displayMainMenu(); // Go back to the main menu
+                break;
+            default:
+                System.out.println("Invalid choice. Please enter a number between 1 and 4.");
+        }
+    } catch (Exception e) {
+        System.out.println("Invalid input. Please enter a valid number.");
+        scanner.nextLine(); // Consume the invalid input to prevent an infinite loop
+        searchItems(); // Recursive call to display the search menu again
+    }
+}
+
+private void searchByGender() {
+    try {
+        String gender;
+        do {
+            System.out.print("Enter gender (M/F/U): ");
+            gender = scanner.next().toUpperCase();
+
+            if (!gender.matches("M|F|U")) {
+                System.out.println("Invalid gender. Please enter M, F, or U.");
+            }
+        } while (!gender.matches("M|F|U"));
+
+        String genderValue;
+        switch (gender) {
+            case "M":
+                genderValue = "Male";
+                break;
+            case "F":
+                genderValue = "Female";
+                break;
+            case "U":
+                genderValue = "Unisex";
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + gender);
+        }
+        
+        System.out.println("Search results based on gender:");
+        loadClothesData();
+        for (String item : clothesList) {
+            String[] itemDetails = item.split(", ");
+            if (itemDetails.length >= 5 && itemDetails[4].equalsIgnoreCase(genderValue)) {
+                System.out.println(item);
+            }
+        }
+    } catch (InputMismatchException e) {
+        System.out.println("Invalid input. Please enter a valid gender.");
+    }
+
+    // Go back to the search menu
+    askForSearchAgain();
+}
+
+
+private void searchBySize() {
+    
+    try {
+        String size ;
+        do {
+        System.out.print("Enter size (XS/S/M/L/XL): ");
+         size = scanner.next().toUpperCase();
+
+        if (!size.matches("XS|S|M|L|XL")) {
+            System.out.println("Invalid size. Please enter XS, S, M, L, or XL.");
+        }
+    }   
+        
+        while (!"XS".equals(size) && !"S".equals(size) && !"M".equals(size) && !"L".equals(size) && !"XL".equals(size));
+         // read data from file
+        loadClothesData();
+        System.out.println("Search results based on size:");
+         for (String item : clothesList) {
+            String[] itemDetails = item.split(", ");
+            if (itemDetails.length >= 3 && itemDetails[2].equalsIgnoreCase(size)) {
+                System.out.println(item);
+            }
+        }
+    }
+     catch (IllegalArgumentException e) {
+        System.out.println(e.getMessage());
+    }
+
+    // Go back to the search menu
+   askForSearchAgain();
+}
+
+
+private void searchByQuality( ) {
+    String quality = null;
+
+    try {
+        do {
+            System.out.print("Enter quality (L/M/H): ");
+            String userInputQuality = scanner.next().toUpperCase();
+
+            if (!userInputQuality.matches("L|M|H")) {
+                System.out.println("Invalid quality. Please enter L, M, or H.");
+            } else {
+                switch (userInputQuality) {
+                    case "L":
+                        quality = "Low";
+                        break;
+                    case "M":
+                        quality = "Medium";
+                        break;
+                    case "H":
+                        quality = "High";
+                         break;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + userInputQuality);
+                }
+            }
+        } while (quality == null);
+        System.out.println("Search results based on quality:");
+        // read data from file
+        loadClothesData();
+        for (String item : clothesList) {
+            String[] itemDetails = item.split(", ");
+            if (itemDetails.length >= 4 && itemDetails[3].equalsIgnoreCase(quality)) {
+                System.out.println(item);
+            }
+        }
+        
+    } catch (InputMismatchException e) {
+        System.out.println("Invalid input. Please enter a valid quality.");
+    }
+
+    // Go back to the search menu
+    askForSearchAgain();
+}
+
+
+private void askForSearchAgain() {
+    System.out.print("Do you want to search again? (yes/no): ");
+    String choice = scanner.next().toLowerCase();
+
+    if ("yes".equals(choice)) {
+        // Continue searching items
+        searchItems();
+    } else if ("no".equals(choice)) {
+        // Go back to the main menu
+        displayMainMenu();
+    } else {
+        System.out.println("Invalid choice. Please enter 'yes' or 'no'.");
+        // Recursive call to ask for search again
+        askForSearchAgain();
+    }
+}
+
 
     private void donateClothes() {
-        Scanner scanner = new Scanner(System.in);
+        
 
         System.out.println("Donation Menu:");
         System.out.println("1. Uppers");
@@ -190,8 +403,7 @@ public class ClothesDonationSystem {
     }
 
     private void donateUppers() {
-        Scanner scanner = new Scanner(System.in);
-
+       
         System.out.println("Uppers Menu:");
         System.out.println("1. Shirts");
         System.out.println("2. Hoodies");
@@ -252,7 +464,7 @@ public class ClothesDonationSystem {
     }
 
     private void donateLowers() {
-        Scanner scanner = new Scanner(System.in);
+        
 
         System.out.println("Lowers Menu:");
         System.out.println("1. Pants");
@@ -357,6 +569,7 @@ public class ClothesDonationSystem {
             default -> throw new IllegalStateException("Unexpected value: " + gender);
         };
     }
+   
 
     private double generateRandomPrice(String quality) {
         Random random = new Random();
@@ -410,8 +623,28 @@ public class ClothesDonationSystem {
     }
 
     private void viewDonatedClothes() {
-        // Implement code for viewing donated clothes
-    }
+            try {
+                System.out.println("Donated Clothes:");
+                loadClothesData();
+        
+                if (clothesList.isEmpty()) {
+                    System.out.println("No donated clothes found.");
+                    displayMainMenu();
+                    return;
+                }
+        
+                for (String item : clothesList) {
+                    System.out.println(item);
+                }
+            } catch (Exception e) {
+                System.out.println("An error occurred while viewing donated clothes: " + e.getMessage());
+            } 
+                // Go back to the main menu
+                displayMainMenu();
+            }
+        
+        
+    
 
     private void viewDonationOrganizations() {
         // Implement code for viewing donation organizations
